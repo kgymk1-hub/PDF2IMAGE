@@ -13,6 +13,8 @@ body{margin:0;background:var(--bg);color:var(--text);font-family:system-ui,-appl
 .app-shell{width:min(980px,100%);margin:0 auto;padding:14px}
 
 /* Cards */
+.startup-status{background:#eff6ff;color:#1e40af;border:1px solid #bfdbfe;border-radius:14px;padding:10px 12px;margin-bottom:14px;font-weight:800;overflow-wrap:anywhere}
+.startup-status.error{background:#fef2f2;color:var(--error);border-color:#fecaca}
 .card{background:var(--card);border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow);padding:16px;margin-bottom:14px}
 h1{font-size:18px;margin:0 0 12px}
 h2{font-size:16px;margin:0 0 10px}

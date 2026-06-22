@@ -5,8 +5,42 @@ import {$,$$,toast,setMessage,setProgress,confirmDiscard} from './ui-service.js'
 let zipCompleteTimer;
 const state={settings:loadSettings(),file:null,pdf:null,images:[],status:'idle',cancel:false,dialogIndex:0};
 const names={x:'X投稿モード',normal:'通常モード'};
-function init(){bind(); applySettingsToUi(); updateFormatConstraints(); renderAll();}
-function bind(){ $('#pdfFile').addEventListener('change',e=>handleFile(e.target.files?.[0])); $('#bottomSelectBtn').onclick=()=>$('#pdfFile').click(); $('#changePdfBtn').onclick=()=>$('#pdfFile').click(); $('#settingsJumpBtn').onclick=()=>$('#settingsCard').scrollIntoView({behavior:'smooth'}); $('#convertBtn').onclick=convert; $('#reconvertBtn').onclick=convert; $('#downloadZipBtn').onclick=downloadAll; $('#cancelBtn').onclick=()=>{state.cancel=true; setMessage('キャンセル要求を受け付けました。現在のページ完了後に停止します。','warn');}; $$('input[name=mode]').forEach(r=>r.onchange=()=>changeMode(r.value)); ['xWidth','xTrim','normalFormat','normalScale','pageRange','backgroundColor','normalTrim','jpegQuality','draftTitle','draftDate','draftNote','draftTags','altTemplate'].forEach(id=>{$('#'+id).addEventListener('input',readUiSettings);}); $('#normalFormat').onchange=()=>{updateFormatConstraints();readUiSettings();}; $('#jpegQuality').oninput=()=>$('#jpegQualityText').textContent=$('#jpegQuality').value; $('#dropZone').addEventListener('dragover',e=>{e.preventDefault();$('#dropZone').classList.add('drag');}); $('#dropZone').addEventListener('dragleave',()=>$('#dropZone').classList.remove('drag')); $('#dropZone').addEventListener('drop',e=>{e.preventDefault();$('#dropZone').classList.remove('drag');handleFile(e.dataTransfer.files?.[0]);}); $('#closeDialogBtn').onclick=()=>$('#previewDialog').close(); $('#prevImageBtn').onclick=()=>openDialog(state.dialogIndex-1); $('#nextImageBtn').onclick=()=>openDialog(state.dialogIndex+1); $('#saveDialogBtn').onclick=()=>{const i=state.images[state.dialogIndex]; if(i) downloadBlob(i.blob,i.fileName);};}
+console.info('app.js loaded');
+console.info('location.href', location.href);
+console.info('location.protocol', location.protocol);
+console.info('serviceWorker ' + ('serviceWorker' in navigator ? 'available' : 'not available'));
+function startupStatus(){return document.getElementById('startupStatus');}
+function setStartupStatus(message,type='info'){const el=startupStatus(); if(!el)return; el.textContent=message; el.classList.toggle('error',type==='error'); el.classList.remove('hidden');}
+function showRuntimeError(error){const message=error?.message||String(error||'不明なエラー'); setStartupStatus(`アプリの実行中にエラーが発生しました\n詳細：${message}`,'error');}
+window.addEventListener('error',(event)=>{console.error('window error',event.error||event.message,event); showRuntimeError(event.error||event.message);});
+window.addEventListener('unhandledrejection',(event)=>{console.error('window unhandledrejection',event.reason,event); showRuntimeError(event.reason);});
+function init(){
+  setStartupStatus('アプリを起動しています…');
+  try{
+    console.info('init started');
+    console.info('bind started');
+    bind();
+    console.info('bind completed');
+    console.info('applySettingsToUi started');
+    applySettingsToUi();
+    console.info('applySettingsToUi completed');
+    updateFormatConstraints();
+    console.info('renderAll started');
+    renderAll();
+    console.info('renderAll completed');
+    console.info('init completed');
+    setStartupStatus('アプリ起動完了');
+    setTimeout(()=>startupStatus()?.classList.add('hidden'),3000);
+  }catch(error){
+    console.error('init failed',error);
+    const message=error?.message||String(error);
+    setStartupStatus(`アプリの初期化に失敗しました\n詳細：${message}`,'error');
+  }
+}
+function requireElement(id){const el=$('#'+id); if(!el) throw new Error(`必須DOM要素が見つかりません: #${id}`); return el;}
+function requireModeRadios(){const radios=$$('input[name=mode]'); if(!radios.length) throw new Error('必須DOM要素が見つかりません: input[name=mode]'); return radios;}
+function verifyRequiredDom(){['pdfFile','settingsJumpBtn','convertBtn','bottomSelectBtn','changePdfBtn','settingsCard','xSettings','normalSettings','message','previewContainer'].forEach(requireElement); requireModeRadios();}
+function bind(){ verifyRequiredDom(); $('#pdfFile').addEventListener('change',e=>handleFile(e.target.files?.[0])); $('#bottomSelectBtn').onclick=()=>$('#pdfFile').click(); $('#changePdfBtn').onclick=()=>$('#pdfFile').click(); $('#settingsJumpBtn').onclick=()=>$('#settingsCard').scrollIntoView({behavior:'smooth'}); $('#convertBtn').onclick=convert; $('#reconvertBtn').onclick=convert; $('#downloadZipBtn').onclick=downloadAll; $('#cancelBtn').onclick=()=>{state.cancel=true; setMessage('キャンセル要求を受け付けました。現在のページ完了後に停止します。','warn');}; $$('input[name=mode]').forEach(r=>r.onchange=()=>changeMode(r.value)); ['xWidth','xTrim','normalFormat','normalScale','pageRange','backgroundColor','normalTrim','jpegQuality','draftTitle','draftDate','draftNote','draftTags','altTemplate'].forEach(id=>{requireElement(id).addEventListener('input',readUiSettings);}); $('#normalFormat').onchange=()=>{updateFormatConstraints();readUiSettings();}; $('#jpegQuality').oninput=()=>$('#jpegQualityText').textContent=$('#jpegQuality').value; $('#dropZone').addEventListener('dragover',e=>{e.preventDefault();$('#dropZone').classList.add('drag');}); $('#dropZone').addEventListener('dragleave',()=>$('#dropZone').classList.remove('drag')); $('#dropZone').addEventListener('drop',e=>{e.preventDefault();$('#dropZone').classList.remove('drag');handleFile(e.dataTransfer.files?.[0]);}); $('#closeDialogBtn').onclick=()=>$('#previewDialog').close(); $('#prevImageBtn').onclick=()=>openDialog(state.dialogIndex-1); $('#nextImageBtn').onclick=()=>openDialog(state.dialogIndex+1); $('#saveDialogBtn').onclick=()=>{const i=state.images[state.dialogIndex]; if(i) downloadBlob(i.blob,i.fileName);};}
 function updateFormatConstraints(){const isJpeg=$('#normalFormat').value==='jpeg'; $('#jpegQualityLabel').classList.toggle('hidden',!isJpeg); const transparent=$('#backgroundColor option[value=transparent]'); transparent.disabled=isJpeg; $('#jpegTransparentHelp').classList.toggle('hidden',!isJpeg); if(isJpeg&&$('#backgroundColor').value==='transparent') $('#backgroundColor').value='white';}
 function readUiSettings(){updateFormatConstraints();Object.assign(state.settings,{mode:document.querySelector('input[name=mode]:checked').value,x:{width:$('#xWidth').value,trim:$('#xTrim').value},normal:{format:$('#normalFormat').value,scale:$('#normalScale').value,range:$('#pageRange').value,background:$('#backgroundColor').value,trim:$('#normalTrim').value,quality:Number($('#jpegQuality').value)},draft:{title:$('#draftTitle').value,date:$('#draftDate').value,note:$('#draftNote').value,tags:$('#draftTags').value,altTemplate:$('#altTemplate').value}}); saveSettings(state.settings); renderMode();}
 function applySettingsToUi(){document.querySelector(`input[name=mode][value=${state.settings.mode}]`).checked=true; $('#xWidth').value=state.settings.x.width; $('#xTrim').value=state.settings.x.trim; $('#normalFormat').value=state.settings.normal.format; $('#normalScale').value=state.settings.normal.scale; $('#pageRange').value=state.settings.normal.range; $('#backgroundColor').value=state.settings.normal.background; $('#normalTrim').value=state.settings.normal.trim; $('#jpegQuality').value=state.settings.normal.quality; $('#jpegQualityText').textContent=state.settings.normal.quality; $('#draftTitle').value=state.settings.draft.title; $('#draftDate').value=state.settings.draft.date; $('#draftNote').value=state.settings.draft.note; $('#draftTags').value=state.settings.draft.tags; $('#altTemplate').value=state.settings.draft.altTemplate; updateFormatConstraints();}

@@ -1,5 +1,6 @@
-const CACHE_NAME = 'postpng-maker-v5-final';
+const CACHE_NAME = 'postpng-maker-v6-diagnostics';
 const APP_SHELL = [
+  './',
   './index.html',
   './css/style.css',
   './js/app.js',
@@ -44,9 +45,14 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
   if (url.protocol === 'blob:' || url.pathname.endsWith('.pdf')) return;
+  const scopePath = new URL(self.registration.scope).pathname;
+  const indexPath = new URL('./index.html', self.location.href).pathname;
+  const isRootRequest = url.pathname === scopePath || url.pathname === `${scopePath}/`;
+  const isIndexRequest = url.pathname === indexPath;
   const isAppShell = APP_SHELL.some((path) => new URL(path, self.location.href).pathname === url.pathname);
   if (!isAppShell) return;
-  event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request).catch((error) => {
+  const cacheRequest = isRootRequest || isIndexRequest ? './index.html' : event.request;
+  event.respondWith(caches.match(cacheRequest).then((cached) => cached || fetch(event.request).catch((error) => {
     console.warn('ネットワーク取得に失敗しました。オフライン用index.htmlを返します。', error);
     return caches.match('./index.html');
   })));
