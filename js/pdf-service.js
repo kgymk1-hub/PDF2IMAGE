@@ -3,19 +3,29 @@ import { canvasToBlob, resizeCanvas, trimWhitespace } from './image-service.js';
 let pdfjsPromise;
 
 async function getPdfjs() {
-  if (!pdfjsPromise) pdfjsPromise = import('../libs/pdf.min.js');
-  const pdfjs = await pdfjsPromise;
-  pdfjs.GlobalWorkerOptions.workerSrc = './libs/pdf.worker.min.js';
-  return pdfjs;
+  try {
+    if (!pdfjsPromise) pdfjsPromise = import('../libs/pdf.min.js');
+    const pdfjs = await pdfjsPromise;
+    pdfjs.GlobalWorkerOptions.workerSrc = './libs/pdf.worker.min.js';
+    return pdfjs;
+  } catch (error) {
+    console.error('PDF.js本体の読み込みに失敗しました。libs/pdf.min.js を確認してください。', error);
+    throw new Error('PDF変換ライブラリの読み込みに失敗しました。アプリを再読み込みしてください。');
+  }
 }
 
 export async function loadPdf(file) {
+  if (file.type && file.type !== 'application/pdf' && !file.name.toLowerCase().endsWith('.pdf')) throw new Error('PDFファイルを選択してください。');
   const pdfjs = await getPdfjs();
   try {
-    return await pdfjs.getDocument({ data: await file.arrayBuffer() }).promise;
+    const buffer = await file.arrayBuffer();
+    const data = new Uint8Array(buffer);
+    return await pdfjs.getDocument({ data }).promise;
   } catch (error) {
-    if (error?.name === 'PasswordException') throw new Error('パスワード付きPDFには現在対応していません。');
-    throw new Error('PDFの読み込みに失敗しました。ファイルが破損しているか、対応していない形式の可能性があります。');
+    console.error('PDFの読み込みに失敗しました。', error);
+    if (error?.name === 'PasswordException') throw new Error('パスワード付きPDFには現在対応していません。パスワード解除後のPDFを選択してください。');
+    if (/worker/i.test(error?.message || '')) throw new Error('PDF workerの読み込みに失敗しました。アプリを再読み込みしてください。');
+    throw new Error('PDFの読み込みに失敗しました。ファイルが破損しているか、パスワード付きPDF、または対応外形式の可能性があります。');
   }
 }
 

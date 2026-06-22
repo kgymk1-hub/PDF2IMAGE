@@ -1,4 +1,4 @@
-const CACHE_NAME = 'postpng-maker-v3-final';
+const CACHE_NAME = 'postpng-maker-v4-final';
 const APP_SHELL = [
   './',
   './index.html',
@@ -44,7 +44,7 @@ self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.endsWith('.pdf') || url.pathname.startsWith('/blob:')) return;
+  if (url.protocol === 'blob:' || url.pathname.endsWith('.pdf')) return;
   const isAppShell = APP_SHELL.some((path) => new URL(path, self.location.href).pathname === url.pathname);
   if (!isAppShell) return;
   event.respondWith(caches.match(event.request).then((cached) => cached || fetch(event.request).catch((error) => {
