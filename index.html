@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#111827">
+  <meta name="description" content="PDFをブラウザ内だけでPNGへ変換するスマホ向けPWA">
+  <title>PDF→PNG 変換 PWA</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'%3E%3Crect width='192' height='192' rx='42' fill='%23111827'/%3E%3Ctext x='96' y='115' text-anchor='middle' font-size='72' fill='white' font-family='Arial'%3EP%3C/text%3E%3C/svg%3E">
+</head>
+<body>
+  <header class="app-header">
+    <div>
+      <p class="eyebrow">ブラウザ内で安全に変換</p>
+      <h1>PDF→PNG 変換</h1>
+      <p class="lead">PDFをアップロードせず、Android Chromeでも使いやすいX投稿用PNGを作成します。</p>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <section class="card controls" aria-labelledby="controls-title">
+      <h2 id="controls-title">1. PDFを選択</h2>
+      <label class="file-picker">
+        <input id="pdfFile" type="file" accept="application/pdf,.pdf">
+        <span>PDFファイルを選択</span>
+      </label>
+      <p id="fileInfo" class="file-info">ファイルは選択されていません。</p>
+
+      <fieldset>
+        <legend>2. 変換倍率</legend>
+        <div class="segmented" role="radiogroup" aria-label="変換倍率">
+          <label><input type="radio" name="scale" value="1" checked><span>1x</span></label>
+          <label><input type="radio" name="scale" value="2"><span>2x</span></label>
+          <label><input type="radio" name="scale" value="3"><span>3x</span></label>
+        </div>
+      </fieldset>
+
+      <fieldset>
+        <legend>3. X投稿向け横幅</legend>
+        <div class="segmented resize-options" role="radiogroup" aria-label="リサイズ幅">
+          <label><input type="radio" name="resizeWidth" value="original" checked><span>元サイズ</span></label>
+          <label><input type="radio" name="resizeWidth" value="1600"><span>1600px</span></label>
+          <label><input type="radio" name="resizeWidth" value="2000"><span>2000px</span></label>
+        </div>
+      </fieldset>
+
+      <button id="convertBtn" class="primary" type="button" disabled>PNGに変換</button>
+      <button id="downloadZipBtn" class="secondary" type="button" disabled>全ページをZIPで保存</button>
+    </section>
+
+    <section class="status-card" aria-live="polite">
+      <div id="message" class="message">PDFを選択すると変換できます。</div>
+      <div class="progress-wrap" aria-label="変換進捗">
+        <progress id="progressBar" value="0" max="100"></progress>
+        <span id="progressText">0%</span>
+      </div>
+    </section>
+
+    <section class="results" aria-labelledby="results-title">
+      <h2 id="results-title">変換結果</h2>
+      <div id="previewContainer" class="preview-container empty">
+        <p>変換後、ページごとのプレビューとダウンロードボタンが表示されます。</p>
+      </div>
+    </section>
+  </main>
+
+  <template id="setTemplate">
+    <section class="post-set">
+      <h3></h3>
+      <div class="page-grid"></div>
+    </section>
+  </template>
+
+  <template id="pageTemplate">
+    <article class="page-card">
+      <img alt="" loading="lazy">
+      <div class="page-meta">
+        <strong></strong>
+        <span></span>
+      </div>
+      <a class="download-link" download>このページを保存</a>
+    </article>
+  </template>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.10.38/pdf.min.mjs" type="module"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+  <script src="js/app.js" type="module"></script>
+</body>
+</html>
