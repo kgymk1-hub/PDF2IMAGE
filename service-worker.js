@@ -1,4 +1,4 @@
-const CACHE_NAME = 'postpng-maker-v4-final';
+const CACHE_NAME = 'postpng-maker-v5-final';
 const APP_SHELL = [
   './',
   './index.html',
