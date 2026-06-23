@@ -51,6 +51,7 @@ details summary{min-height:44px;cursor:pointer;font-weight:900}
 .notice,.message.warn{color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:10px}
 .message.error{color:var(--error);font-weight:800}
 .message.success{color:var(--success);font-weight:800}
+.startup-status,.message{white-space:pre-line}
 .progress-wrap{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;margin-top:10px}
 progress{width:100%;height:14px;accent-color:var(--primary)}
 

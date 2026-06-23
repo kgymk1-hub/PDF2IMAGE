@@ -29,10 +29,20 @@ const state = {
   dialogIndex: 0,
 };
 const names = { x: "X投稿モード", normal: "通常モード" };
-console.info("app.js loaded");
-console.info("location.href", location.href);
-console.info("location.protocol", location.protocol);
-console.info(
+const DEBUG = new URLSearchParams(location.search).has("debug");
+
+function debugLog(...args) {
+  if (DEBUG) console.info(...args);
+}
+
+function debugWarn(...args) {
+  if (DEBUG) console.warn(...args);
+}
+
+debugLog("app.js loaded");
+debugLog("location.href", location.href);
+debugLog("location.protocol", location.protocol);
+debugLog(
   "serviceWorker " +
     ("serviceWorker" in navigator ? "available" : "not available"),
 );
@@ -64,18 +74,18 @@ window.addEventListener("unhandledrejection", (event) => {
 function init() {
   setStartupStatus("アプリを起動しています…");
   try {
-    console.info("init started");
-    console.info("bind started");
+    debugLog("init started");
+    debugLog("bind started");
     bind();
-    console.info("bind completed");
-    console.info("applySettingsToUi started");
+    debugLog("bind completed");
+    debugLog("applySettingsToUi started");
     applySettingsToUi();
-    console.info("applySettingsToUi completed");
+    debugLog("applySettingsToUi completed");
     updateFormatConstraints();
-    console.info("renderAll started");
+    debugLog("renderAll started");
     renderAll();
-    console.info("renderAll completed");
-    console.info("init completed");
+    debugLog("renderAll completed");
+    debugLog("init completed");
     window.__POSTPNG_BOOT.initCompleted = true;
     setStartupStatus("アプリ起動完了");
     setTimeout(() => startupStatus()?.classList.add("hidden"), 3000);
@@ -111,13 +121,19 @@ function verifyRequiredDom() {
   ].forEach(requireElement);
   requireModeRadios();
 }
+function openFilePicker() {
+  const input = $("#pdfFile");
+  input.value = "";
+  input.click();
+}
+
 function bind() {
   verifyRequiredDom();
   $("#pdfFile").addEventListener("change", (e) =>
     handleFile(e.target.files?.[0]),
   );
-  $("#bottomSelectBtn").onclick = () => $("#pdfFile").click();
-  $("#changePdfBtn").onclick = () => $("#pdfFile").click();
+  $("#bottomSelectBtn").onclick = openFilePicker;
+  $("#changePdfBtn").onclick = openFilePicker;
   $("#settingsJumpBtn").onclick = () =>
     $("#settingsCard").scrollIntoView({ behavior: "smooth" });
   $("#convertBtn").onclick = convert;
@@ -136,6 +152,7 @@ function bind() {
   [
     "xWidth",
     "xTrim",
+    "xQuality",
     "normalFormat",
     "normalScale",
     "pageRange",
@@ -189,7 +206,11 @@ function readUiSettings() {
   updateFormatConstraints();
   Object.assign(state.settings, {
     mode: document.querySelector("input[name=mode]:checked").value,
-    x: { width: $("#xWidth").value, trim: $("#xTrim").value },
+    x: {
+      width: $("#xWidth").value,
+      trim: $("#xTrim").value,
+      quality: $("#xQuality").value,
+    },
     normal: {
       format: $("#normalFormat").value,
       scale: $("#normalScale").value,
@@ -215,6 +236,7 @@ function applySettingsToUi() {
   ).checked = true;
   $("#xWidth").value = state.settings.x.width;
   $("#xTrim").value = state.settings.x.trim;
+  $("#xQuality").value = state.settings.x.quality;
   $("#normalFormat").value = state.settings.normal.format;
   $("#normalScale").value = state.settings.normal.scale;
   $("#pageRange").value = state.settings.normal.range;
@@ -304,7 +326,7 @@ async function convert() {
       const opt =
         state.settings.mode === "x"
           ? {
-              scale: 2,
+              scale: state.settings.x.quality === "high" ? 3 : 2,
               format: "png",
               quality: 92,
               background: "white",
@@ -330,7 +352,6 @@ async function convert() {
         alt: makeAlt(p),
       });
       setProgress(((idx + 1) / pages.length) * 100);
-      renderPreviews();
       await new Promise(requestAnimationFrame);
       if (state.cancel) {
         state.status = "cancelled";
@@ -386,6 +407,7 @@ function showZipComplete() {
   }, 3000);
 }
 async function downloadAll() {
+  if (!state.images.length) return;
   const base = safeBaseName(state.file?.name);
   setMessage("ZIP作成中…");
   setProgress(0);
@@ -464,6 +486,7 @@ function renderAll() {
   $("#bottomSelectBtn").classList.toggle("hidden", has);
   $("#downloadZipBtn").classList.toggle("hidden", !converted);
   $("#downloadZipBtn").disabled = !converted || conv;
+  $("#changePdfBtn").disabled = conv;
   $("#reconvertBtn").classList.toggle("hidden", !converted);
   renderPreviews();
 }
@@ -495,7 +518,7 @@ function setCard(s) {
   sec.className = "post-set card";
   const first = imgs[0].pageNumber,
     last = imgs.at(-1).pageNumber;
-  sec.innerHTML = `<details ${s === 1 ? "open" : ""}><summary><strong>X投稿セット ${s}</strong><span>対象：${first}〜${last}ページ / ${imgs.length}枚</span></summary><div class="set-actions"><button>セットをZIP保存</button><button>本文をコピー</button><button>ALTをまとめてコピー</button><button>セット名をコピー</button></div><p class="counter">本文目安：${makeDraft(s).length}/280文字</p><div class="page-grid"></div></details>`;
+  sec.innerHTML = `<details ${s === 1 ? "open" : ""}><summary><strong>X投稿セット ${s}</strong><span>対象：${first}〜${last}ページ / ${imgs.length}枚</span></summary><div class="set-actions"><button type="button">セットをZIP保存</button><button type="button">本文をコピー</button><button type="button">ALTをまとめてコピー</button><button type="button">セット名をコピー</button></div><p class="counter">通常投稿目安：${makeDraft(s).length}/280文字</p><div class="page-grid"></div></details>`;
   const b = $$("button", sec);
   b[0].onclick = () => downloadSet(s);
   b[1].onclick = () => copyDraft(s);
@@ -511,14 +534,23 @@ function setCard(s) {
 function pageCard(img, index) {
   const a = document.createElement("article");
   a.className = "page-card";
-  a.innerHTML = `<h3>ページ ${img.pageNumber}</h3><button class="image-button" aria-label="ページ${img.pageNumber}を拡大表示"><img loading="lazy" alt="ページ${img.pageNumber}の変換プレビュー" src="${img.url}"></button><p class="page-meta">サイズ：${img.width} × ${img.height}px / 容量：${formatBytes(img.blob.size)}</p><div class="card-actions"><button>保存</button><button>情報</button></div><label class="alt-field">ALT下書き<textarea rows="2">${img.alt}</textarea></label><button class="copy-alt">ALTをコピー</button>`;
+  a.innerHTML = `<h3>ページ ${img.pageNumber}</h3><button class="image-button" type="button" aria-label="ページ${img.pageNumber}を拡大表示"><img loading="lazy" alt="ページ${img.pageNumber}の変換プレビュー" src="${img.url}"></button><p class="page-meta">サイズ：${img.width} × ${img.height}px / 容量：${formatBytes(img.blob.size)}</p><div class="card-actions"><button type="button">保存</button><button type="button">情報</button></div><label class="alt-field">ALT下書き</label><button class="copy-alt" type="button">ALTをコピー</button>`;
+  const textarea = document.createElement("textarea");
+  textarea.rows = 2;
+  textarea.value = img.alt;
+  $(".alt-field", a).append(textarea);
   $(".image-button", a).onclick = () => openDialog(index);
   const buttons = $$("button", a);
   buttons[1].onclick = () => downloadBlob(img.blob, img.fileName);
   buttons[2].onclick = () =>
-    toast(
-      `ファイル名: ${img.fileName} / ページ: ${img.pageNumber} / ${img.width}×${img.height}px / ${formatBytes(img.blob.size)} / ${img.fileName.endsWith(".jpg") ? "JPEG" : "PNG"}${img.setNumber ? ` / X投稿セット${img.setNumber}` : ""}`,
-    );
+    alert(`ファイル名: ${img.fileName}
+ページ: ${img.pageNumber}
+サイズ: ${img.width} × ${img.height}px
+容量: ${formatBytes(img.blob.size)}
+形式: ${img.fileName.endsWith(".jpg") ? "JPEG" : "PNG"}${
+      state.settings.mode === "x" ? `
+X投稿セット: ${img.setNumber}` : ""
+    }`);
   $(".alt-field textarea", a).oninput = (e) => (img.alt = e.target.value);
   $(".copy-alt", a).onclick = async () => {
     if (await copyText(img.alt)) toast("ALTをコピーしました");
@@ -535,4 +567,4 @@ function openDialog(index) {
   $("#previewDialog").showModal();
 }
 init();
-import("./pwa-service.js").catch(console.warn);
+import("./pwa-service.js").catch(debugWarn);
