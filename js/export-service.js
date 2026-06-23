@@ -8,7 +8,7 @@ export function downloadBlob(blob, fileName) {
   document.body.append(a);
   a.click();
   a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  setTimeout(() => URL.revokeObjectURL(url), 10000);
 }
 
 export async function zipImages(images, zipName, onProgress) {

@@ -7,7 +7,8 @@ async function getPdfjs() {
     if (!pdfjsPromise) pdfjsPromise = import('../libs/pdf.min.js');
 
     const pdfjs = await pdfjsPromise;
-    pdfjs.GlobalWorkerOptions.workerSrc = './libs/pdf.worker.min.js';
+    pdfjs.GlobalWorkerOptions.workerSrc =
+      new URL('../libs/pdf.worker.min.js', import.meta.url).toString();
     return pdfjs;
   } catch (error) {
     console.error(
