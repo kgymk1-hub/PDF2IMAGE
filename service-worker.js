@@ -1,4 +1,4 @@
-const CACHE_NAME = "postpng-maker-v10-cleanup";
+const CACHE_NAME = "postpng-maker-v11-final";
 const DEBUG = new URL(self.location.href).searchParams.has("debug");
 
 function debugWarn(...args) {

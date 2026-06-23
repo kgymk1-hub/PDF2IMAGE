@@ -165,7 +165,11 @@ function bind() {
     "draftTags",
     "altTemplate",
   ].forEach((id) => {
-    requireElement(id).addEventListener("input", readUiSettings);
+    const el = requireElement(id);
+    el.addEventListener("input", readUiSettings);
+    if (el.tagName === "SELECT") {
+      el.addEventListener("change", readUiSettings);
+    }
   });
   $("#normalFormat").onchange = () => {
     updateFormatConstraints();

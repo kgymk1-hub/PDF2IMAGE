@@ -1,4 +1,4 @@
-import {$, toast} from './ui-service.js';
+import { $, toast } from './ui-service.js';
 
 export function downloadBlob(blob, fileName) {
   const url = URL.createObjectURL(blob);
@@ -13,11 +13,23 @@ export function downloadBlob(blob, fileName) {
 
 export async function zipImages(images, zipName, onProgress) {
   if (!window.JSZip) throw new Error('JSZipを読み込めませんでした。');
+
   const zip = new JSZip();
-  images.forEach((image) => zip.file(image.fileName, image.blob, { binary: true }));
-  const blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', encodeFileName: (name) => new TextEncoder().encode(name) }, (metadata) => {
-    onProgress?.(Math.round(metadata.percent));
+  images.forEach((image) => {
+    zip.file(image.fileName, image.blob, { binary: true });
   });
+
+  const blob = await zip.generateAsync(
+    {
+      type: 'blob',
+      compression: 'DEFLATE',
+      encodeFileName: (name) => new TextEncoder().encode(name),
+    },
+    (metadata) => {
+      onProgress?.(Math.round(metadata.percent));
+    },
+  );
+
   downloadBlob(blob, zipName);
 }
 
@@ -25,8 +37,10 @@ function showManualCopy(text) {
   const dialog = $('#manualCopyDialog');
   const textarea = $('#manualCopyText');
   textarea.value = text;
+
   if (dialog?.showModal) dialog.showModal();
   else textarea.focus();
+
   requestAnimationFrame(() => {
     textarea.focus();
     textarea.select();
@@ -35,11 +49,17 @@ function showManualCopy(text) {
 
 export async function copyText(text) {
   try {
-    if (!navigator.clipboard?.writeText) throw new Error('Clipboard API is unavailable.');
+    if (!navigator.clipboard?.writeText) {
+      throw new Error('Clipboard API is unavailable.');
+    }
+
     await navigator.clipboard.writeText(text);
     return true;
   } catch (error) {
-    console.warn('Clipboard APIでのコピーに失敗しました。手動コピーUIを表示します。', error);
+    console.warn(
+      'Clipboard APIでのコピーに失敗しました。手動コピーUIを表示します。',
+      error,
+    );
     showManualCopy(text);
     toast('コピーに失敗しました。手動でコピーしてください。', 'error');
     return false;

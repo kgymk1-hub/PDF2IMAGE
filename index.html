@@ -124,7 +124,7 @@
         var el = document.getElementById('startupStatus');
         if (el) {
           el.classList.add('error');
-          el.textContent = 'アプリ本体 js/app.js が読み込まれていません。古いService Workerキャッシュ、GitHub Pagesの反映遅延、またはJavaScriptモジュールの読み込み失敗が考えられます。サイトデータを削除して再読み込みしてください。';
+          el.textContent = 'アプリ本体 js/app.js または関連モジュールが読み込まれていません。古いService Workerキャッシュ、GitHub Pagesの反映遅延、JavaScriptモジュールの構文エラー、または読み込み失敗が考えられます。サイトデータを削除して再読み込みしてください。';
         }
       } else if (!window.__POSTPNG_BOOT.initCompleted) {
         var el2 = document.getElementById('startupStatus');
