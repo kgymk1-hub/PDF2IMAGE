@@ -1,5 +1,12 @@
-const CACHE_NAME = "postpng-maker-v9-final";
+const CACHE_NAME = "postpng-maker-v10-cleanup";
+const DEBUG = new URL(self.location.href).searchParams.has("debug");
+
+function debugWarn(...args) {
+  if (DEBUG) console.warn(...args);
+}
+
 const APP_SHELL = [
+  // GitHub Pages の /PDF-to-PNG/ ルート表示にも対応するため "./" を含める
   "./",
   "./index.html",
   "./css/style.css",
@@ -69,7 +76,7 @@ self.addEventListener("fetch", (event) => {
   const isAppShell = APP_SHELL.some(
     (path) => new URL(path, self.location.href).pathname === url.pathname,
   );
-  if (!isAppShell) return;
+  if (!isAppShell && !isRootRequest && !isIndexRequest) return;
   const cacheRequest =
     isRootRequest || isIndexRequest ? "./index.html" : event.request;
   event.respondWith(
@@ -77,7 +84,7 @@ self.addEventListener("fetch", (event) => {
       (cached) =>
         cached ||
         fetch(event.request).catch((error) => {
-          console.warn(
+          debugWarn(
             "ネットワーク取得に失敗しました。オフライン用index.htmlを返します。",
             error,
           );

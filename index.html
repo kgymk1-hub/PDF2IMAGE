@@ -13,7 +13,7 @@
 <body>
   <header class="app-header">
     <div><p class="brand">PostPNG Maker</p><p id="modeBadge" class="mode-badge">X投稿モード</p></div>
-    <button id="settingsJumpBtn" class="ghost icon-label" type="button" aria-label="出力設定へ移動">設定</button>
+    <button id="settingsJumpBtn" class="ghost icon-label" type="button" aria-label="出力設定へ移動">設定へ</button>
   </header>
 
   <main class="app-shell">
@@ -55,6 +55,8 @@
       <div id="xSettings" class="settings-group">
         <label>出力横幅<select id="xWidth"><option value="1200">1200px：軽量</option><option value="1600" selected>1600px：標準</option><option value="2000">2000px：高精細</option><option value="original">元サイズ</option></select></label>
         <label>余白トリミング<select id="xTrim"><option value="on" selected>ON（簡易自動）</option><option value="off">OFF</option></select></label>
+        <label>画質<select id="xQuality"><option value="standard" selected>標準（2x）</option><option value="high">高精細（3x）</option></select></label>
+        <p class="help">細かい表は高精細がおすすめです。変換に時間がかかる場合があります。</p>
         <p class="help">指定横幅は縮小時の上限です。元画像が指定横幅より小さい場合は、画質劣化を避けるため拡大しません。細かい表は2000pxがおすすめです。X投稿モードは白背景PNG固定です。</p><p class="help">ALT下書きは変換結果に紐づきます。PDF変更や再変換を行うと編集内容はリセットされます。</p>
         <details><summary>投稿本文・ALT下書き</summary>
           <label>タイトル<input id="draftTitle" type="text"></label>
@@ -91,6 +93,7 @@
   <dialog id="manualCopyDialog" class="manual-copy-dialog"><h2>手動コピー</h2><p>コピーに失敗しました。下のテキストを手動でコピーしてください。</p><textarea id="manualCopyText" rows="8" readonly></textarea><form method="dialog"><button class="primary" type="submit">閉じる</button></form></dialog>
   <dialog id="previewDialog"><button id="closeDialogBtn" class="dialog-close" type="button">閉じる</button><p id="dialogTitle"></p><img id="dialogImage" alt="拡大プレビュー"><div class="dialog-actions"><button id="prevImageBtn" type="button">前へ</button><button id="saveDialogBtn" type="button">保存</button><button id="nextImageBtn" type="button">次へ</button></div></dialog>
 
+  <!-- app.js が構文エラー等で実行されない場合に、画面上へ原因を出すための起動診断 -->
   <script>
     window.__POSTPNG_BOOT = {
       startedAt: Date.now(),
