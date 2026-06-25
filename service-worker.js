@@ -1,4 +1,4 @@
-const CACHE_NAME = "pdf2image-v15-format-fix";
+const CACHE_NAME = "pdf2image-v16-final";
 const DEBUG = new URL(self.location.href).searchParams.has("debug");
 
 function debugWarn(...args) {
@@ -6,7 +6,7 @@ function debugWarn(...args) {
 }
 
 const APP_SHELL = [
-  // GitHub Pages の /PDF-to-PNG/ ルート表示にも対応するため "./" を含める
+  // GitHub Pages のリポジトリルート表示にも対応するため "./" を含める
   "./",
   "./index.html",
   "./css/style.css",
